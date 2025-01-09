@@ -47,16 +47,47 @@ namespace CRUD_Kopilovs.Controllers
         }
 
         // GET: Orders/Create
+        //public IActionResult Create()
+        //{
+        //    ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id");
+        //    ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id");
+        //    ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)));
+        //    return View();
+        //}
+
+        //// POST: Orders/Create
+        //// To protect from overposting attacks, enable the specific properties you want to bind to.
+        //// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Create([Bind("Id,ClientId,ProductId,Quantity,Status")] Order order)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Add(order);
+        //        await _context.SaveChangesAsync();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id", order.ClientId);
+        //    ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id", order.ProductId);
+        //    ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)), order.Status);
+        //    return View(order);
+        //}
         public IActionResult Create()
         {
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id");
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id");
+            // Отображать имена клиентов вместо их ID
+            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name");
+
+            // Отображать названия продуктов вместо их ID
+            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name");
+
+            // Для статусов оставить прежнее отображение
+            ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)));
+
             return View();
         }
 
         // POST: Orders/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,ClientId,ProductId,Quantity,Status")] Order order)
@@ -67,10 +98,15 @@ namespace CRUD_Kopilovs.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id", order.ClientId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id", order.ProductId);
+
+            // Сохраняем выбранные значения при возврате на форму из-за ошибки
+            ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Name", order.ClientId);
+            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+            ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)), order.Status);
+
             return View(order);
         }
+
 
         // GET: Orders/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -87,6 +123,7 @@ namespace CRUD_Kopilovs.Controllers
             }
             ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id", order.ClientId);
             ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id", order.ProductId);
+            ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)), order.Status);
             return View(order);
         }
 
@@ -124,6 +161,7 @@ namespace CRUD_Kopilovs.Controllers
             }
             ViewData["ClientId"] = new SelectList(_context.Clients, "Id", "Id", order.ClientId);
             ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Id", order.ProductId);
+            ViewData["Status"] = new SelectList(Enum.GetValues(typeof(Status)), order.Status);
             return View(order);
         }
 

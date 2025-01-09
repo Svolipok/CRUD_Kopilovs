@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CRUD_Kopilovs.Data;
 using CRUD_Kopilovs.Models;
+using CRUD_Kopilovs.Models.ViewModels;
 
 namespace CRUD_Kopilovs.Controllers
 {
@@ -20,10 +21,58 @@ namespace CRUD_Kopilovs.Controllers
         }
 
         // GET: Clients
+        //public async Task<IActionResult> Index()
+        //{
+        //    return View(await _context.Clients.ToListAsync());
+        //}
+        //  
+
+        //public async Task<IActionResult> Index()
+        //{
+        //    var clients = await _context.Clients
+        //        .Select(client => new ClientViewModel
+        //        {
+        //            Id = client.Id,
+        //            Name = client.Name,
+        //            Email = client.Email,
+        //            Birthdate = client.Birthdate,
+        //            Gender = client.Gender,
+        //            OrderCount = client.Orders.Count(),
+        //            AverageOrderAmount = client.Orders.Any() ? client.Orders.Average(o => o.Quantity * o.Product.Price) : 0
+        //        })
+        //        .ToListAsync();
+
+        //    return View(clients);
+        //}
+
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Clients.ToListAsync());
+            var clients = await _context.Clients
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.Product)
+                .Select(client => new ClientViewModel
+                {
+                    Id = client.Id,
+                    Name = client.Name,
+                    Email = client.Email,
+                    Birthdate = client.Birthdate,
+                    Gender = client.Gender,
+                    OrderCount = client.Orders.Count(),
+                    AverageOrderAmount = client.Orders.Any() ? client.Orders.Average(o => o.Quantity * o.Product.Price) : 0,
+                    Orders = client.Orders.Select(o => new CRUD_Kopilovs.Models.ViewModels.OrderViewModel
+                    {
+                        Id = o.Id,
+                        ProductTitle = o.Product.Title, // Заменено Name на Title
+                        Quantity = o.Quantity,
+                        Status = o.Status
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return View(clients);
         }
+
+
 
         // GET: Clients/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -135,19 +184,47 @@ namespace CRUD_Kopilovs.Controllers
         }
 
         // POST: Clients/Delete/5
+        //[HttpPost, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> DeleteConfirmed(int id)
+        //{
+        //    var client = await _context.Clients.FindAsync(id);
+        //    if (client != null)
+        //    {
+        //        _context.Clients.Remove(client);
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //    return RedirectToAction(nameof(Index));
+        //}
+
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client != null)
+            // Загрузить клиента вместе с заказами
+            var client = await _context.Clients
+                .Include(c => c.Orders) // Загружаем связанные заказы
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (client == null)
             {
-                _context.Clients.Remove(client);
+                return NotFound();
             }
 
+            // Удалить все заказы клиента
+            _context.Orders.RemoveRange(client.Orders);
+
+            // Удалить самого клиента
+            _context.Clients.Remove(client);
+
+            // Сохранить изменения в базе данных
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
+
+
 
         private bool ClientExists(int id)
         {
